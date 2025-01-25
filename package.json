@@ -1,0 +1,23 @@
+{
+  "name": "artamscraping",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "dotenv": "^16.4.7",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "morgan": "~1.9.1",
+    "pg": "^8.13.1",
+    "pg-hstore": "^2.3.4",
+    "playwright": "^1.50.0",
+    "pug": "2.0.0-beta11",
+    "puppeteer": "^24.1.1",
+    "sequelize": "^6.37.5"
+  }
+}
