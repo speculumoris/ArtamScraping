@@ -1,7 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
-// Esers modeli (kaynak tablo)
 const Esers = sequelize.define('Esers', {
     id: {
         type: DataTypes.INTEGER,
@@ -16,7 +15,6 @@ const Esers = sequelize.define('Esers', {
     timestamps: false
 });
 
-// Eserler modeli (hedef tablo)
 const Eserler = sequelize.define('Eserlers', {
     id: {
         type: DataTypes.INTEGER,
@@ -116,11 +114,11 @@ ArtWork,
 // Modelleri senkronize et
 const syncModels = async () => {
     try {
-        // Force: true ile tabloları silip yeniden oluşturur
-        await sequelize.sync({ force: true });
-        console.log('Modeller senkronize edildi');
+        
+        await sequelize.sync({ alter: true });
+        console.log('Modeller güncellendi');
     } catch (error) {
-        console.error('Model senkronizasyon hatası:', error);
+        console.error('Model güncelleme hatası:', error);
     }
 };
 

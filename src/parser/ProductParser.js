@@ -33,19 +33,20 @@ class ProductParser {
                 console.error('Detay container bulunamadı');
                 return null;
             }
+
             const parts = url.split('/');
             const sanatciEser = parts[parts.length - 1];
-
             const regex = /^(.*?)-(\d{4}(?:-\d{4})?)-(.*?)(?:-\d+)?$/;
-
             const match = sanatciEser.match(regex);
+
             if (match) {
                 this.data.sanatciAd = match[1].replace(/-/g, ' ').trim();
                 this.data.sanatciDogumOlum = match[2];
-                this.data.eserAdi = match[3].replace(/-/g, ' ').trim()
-            }else{
+                this.data.eserAdi = match[3].replace(/-/g, ' ').trim();
+            } else {
                 const sanatciName = detailContainer.find('.online-auction-product__name.artamOnlineAuctionProductDetail__name').first().text().trim();
                 const sanatciMatch = sanatciName.match(/(.*?)\s*\((\d{4}-\d{4})\)/);
+                
                 if (sanatciMatch) {
                     this.data.sanatciAd = sanatciMatch[1].trim();
                     this.data.sanatciDogumOlum = sanatciMatch[2];
@@ -54,11 +55,10 @@ class ProductParser {
                 const eserAdi = detailContainer.find('.online-auction-product__name.artamOnlineAuctionProductDetail__name').eq(1).text().trim();
                 this.data.eserAdi = eserAdi;
             }
+
             const lotNoText = detailContainer.find('.online-auction-product__lotno.artamOnlineAuctionProductDetail__lotno').text().trim();
             this.data.lotNo = parseInt(lotNoText.replace(/[^0-9]/g, ''));
             this.data.muzayedeNo = "396";
-
-
 
             const descText = detailContainer.find('.online-auction-product__desc.artamOnlineAuctionProductDetail__desc').text().trim();
 
@@ -69,9 +69,10 @@ class ProductParser {
 
             this.data.imzali = descText.toLowerCase().includes('imzalı');
 
-            const tarihMatch = descText.match(/(\d{4}) tarihli/);
-            if (tarihMatch) {
-                this.data.tarihi = parseInt(tarihMatch[1]); // Örn: 1977
+            const yearRegex = /\b(19|20)\d{2}\b/g;
+            const years = descText.match(yearRegex);
+            if (years) {
+                this.data.tarihi = parseInt(years);
             }
 
             const boyutMatch = descText.match(/(\d+)x(\d+)\s*(cm|mm|m)/i);
@@ -97,10 +98,23 @@ class ProductParser {
             }
 
             const averageText = detailContainer.find('.artamOnlineAuctionProductDetail__averagePrice').text().trim();
-            if (averageText.includes('Güncel Değer Ortalaması')) {
-                const averageMatch = averageText.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*TL\s*-\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*TL/);
-                if (averageMatch) {
-                    this.data.guncelDegerOrtalamasi = `${averageMatch[1]} TL - ${averageMatch[2]} TL`;
+            if (averageText) {
+                const cleanText = averageText.replace(/\./g, '');
+                
+                const priceRegex = /(?:Güncel Değer Ortalaması:)?\s*(\d+(?:,\d+)*)\s*TL\s*-\s*(\d+(?:,\d+)*)\s*TL/i;
+                const matches = cleanText.match(priceRegex);
+                
+                if (matches) {
+                    const firstPrice = matches[1].replace(/,/g, '.');
+                    const secondPrice = matches[2].replace(/,/g, '.');
+                    
+                    this.data.guncelDegerOrtalamasi = `${firstPrice} TL - ${secondPrice} TL`;
+                    
+                    console.log('Güncel Değer Parse Sonucu:', {
+                        rawText: averageText,
+                        cleanText: cleanText,
+                        parsedValue: this.data.guncelDegerOrtalamasi
+                    });
                 }
             }
 
@@ -126,7 +140,7 @@ class ProductParser {
             this.data.imageLink = imgUrl;
             this.data.link = url;
 
-            console.log('Parse edilen veriler:', {
+            console.log('Parse edilen sanatçı bilgileri:', {
                 sanatciAd: this.data.sanatciAd,
                 sanatciDogumOlum: this.data.sanatciDogumOlum,
                 tarihi: this.data.tarihi
