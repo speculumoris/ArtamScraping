@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
-const Eser = sequelize.define('Eser', {
+const Eserler = sequelize.define('Eserlers', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -51,10 +51,12 @@ const Eser = sequelize.define('Eser', {
     defaultValue: false
   },
   tarihi: {
-    type: DataTypes.DATE
+    type: DataTypes.INTEGER,
+    allowNull: true
   },
-  sanatcıDogumOlum: {
-    type: DataTypes.DATE
+  sanatciDogumOlum: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   baslangicFiyati: {
     type: DataTypes.DECIMAL(10, 2),
@@ -64,11 +66,14 @@ const Eser = sequelize.define('Eser', {
     type: DataTypes.DECIMAL(10, 2)
   },
   guncelDegerOrtalamasi: {
-    type: DataTypes.DECIMAL(10, 2)
+    type: DataTypes.STRING
+  },
+  imageLink: {
+    type: DataTypes.STRING
   },
   link: {
     type: DataTypes.STRING
   }
 });
 
-module.exports = Eser; 
+module.exports = Eserler;
