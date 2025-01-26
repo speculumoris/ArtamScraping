@@ -58,8 +58,6 @@ class ProductParser {
             this.data.lotNo = parseInt(lotNoText.replace(/[^0-9]/g, ''));
             this.data.muzayedeNo = "396";
 
-
-
             const descText = detailContainer.find('.online-auction-product__desc.artamOnlineAuctionProductDetail__desc').text().trim();
 
             const teknikMatch = descText.match(/([^,]+) üzerine ([^,]+)/);
@@ -69,9 +67,10 @@ class ProductParser {
 
             this.data.imzali = descText.toLowerCase().includes('imzalı');
 
-            const tarihMatch = descText.match(/(\d{4}) tarihli/);
-            if (tarihMatch) {
-                this.data.tarihi = parseInt(tarihMatch[1]); // Örn: 1977
+            const yearRegex = /\b(19|20)\d{2}\b/g;
+            const years = descText.match(yearRegex);
+            if (years) {
+                this.data.tarihi = parseInt(years);
             }
 
             const boyutMatch = descText.match(/(\d+)x(\d+)\s*(cm|mm|m)/i);
@@ -97,11 +96,24 @@ class ProductParser {
             }
 
             const averageText = detailContainer.find('.artamOnlineAuctionProductDetail__averagePrice').text().trim();
-            if (averageText.includes('Güncel Değer Ortalaması')) {
-                const averageMatch = averageText.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*TL\s*-\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*TL/);
-                if (averageMatch) {
-                    this.data.guncelDegerOrtalamasi = `${averageMatch[1]} TL - ${averageMatch[2]} TL`;
+            if (averageText) {
+                const priceRegex = /(?:Güncel Değer Ortalaması:)?\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*TL\s*-\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*TL/i;
+                const matches = averageText.match(priceRegex);
+                
+                if (matches) {
+                    this.data.guncelDegerOrtalamasi = `${matches[1]} TL - ${matches[2]} TL`;
+                } else {
+                    const numberRegex = /(\d+(?:,\d+)*(?:\.\d+)?)/g;
+                    const numbers = averageText.match(numberRegex);
+                    if (numbers && numbers.length >= 2) {
+                        this.data.guncelDegerOrtalamasi = `${numbers[0]} TL - ${numbers[1]} TL`;
+                    }
                 }
+                
+                console.log('Güncel Değer Parse Sonucu:', {
+                    rawText: averageText,
+                    parsedValue: this.data.guncelDegerOrtalamasi
+                });
             }
 
             const bitisText = detailContainer.find('.artamOnlineAuctionProductDetail__finishedTime').text().trim();

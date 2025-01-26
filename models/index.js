@@ -1,7 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
-// Esers modeli (kaynak tablo)
 const Esers = sequelize.define('Esers', {
     id: {
         type: DataTypes.INTEGER,
@@ -16,7 +15,6 @@ const Esers = sequelize.define('Esers', {
     timestamps: false
 });
 
-// Eserler modeli (hedef tablo)
 const Eserler = sequelize.define('Eserlers', {
     id: {
         type: DataTypes.INTEGER,

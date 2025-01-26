@@ -8,15 +8,24 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-router.get('/artam/auctions', function(req, res, next) {
-  const getTablesFromScraping= linkFetcher.getTablesFromScraping();
-    res.json();
-
+router.get('/artam/auctions', async function(req, res, next) {
+    try {
+        const results = await linkFetcher.getTablesFromScraping();
+        res.json({
+            success: true,
+            data: results
+        });
+    } catch (error) {
+        console.error('Link toplama hatası:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Link toplama işlemi başarısız'
+        });
+    }
 });
 
 router.get('/eser-links', async (req, res) => {
     try {
-        // Esers tablosundan linkleri al
         const links = await Esers.findAll({
             attributes: ['link'],
             raw: true
