@@ -4,7 +4,7 @@ class ProductParser {
     constructor() {
         this.data = {
             sanatciAd: "",
-            sanatciDogumOlum: null,
+            sanatciDogumOlum: "",
             turu: "",
             eserAdi: "",
             lotNo: 0,
@@ -15,44 +15,64 @@ class ProductParser {
             boyutBoy: null,
             boyutBirim: "cm",
             imzali: false,
-            tarihi: null,
+            tarihi: 0,
             baslangicFiyati: 0.00,
             satisFiyati: null,
-            guncelDegerOrtalamasi: null,
-            link: ""
+            guncelDegerOrtalamasi: "",
+            link: "",
+            imageLink: ""
         };
     }
 
-    parseProductDetail(html,url) {
+    parseProductDetail(html, url) {
         const $ = cheerio.load(html);
 
         try {
-            const lotNo = $('.online-auction-product__lotno.artamOnlineAuctionProductDetail__lotno').text().trim();
-            this.data.lotNo = parseInt(lotNo.replace(/[^0-9]/g, ''));
-            this.data.muzayedeNo = "396"; // TODO: muzayedeNo dinamik olmalı
+            const detailContainer = $('.artamOnlineAuctionProductDetail');
+            if (!detailContainer.length) {
+                console.error('Detay container bulunamadı');
+                return null;
+            }
+            const parts = url.split('/');
+            const sanatciEser = parts[parts.length - 1];
+
+            const regex = /^(.*?)-(\d{4}(?:-\d{4})?)-(.*?)(?:-\d+)?$/;
+
+            const match = sanatciEser.match(regex);
+            if (match) {
+                this.data.sanatciAd = match[1].replace(/-/g, ' ').trim();
+                this.data.sanatciDogumOlum = match[2];
+                this.data.eserAdi = match[3].replace(/-/g, ' ').trim()
+            }else{
+                const sanatciName = detailContainer.find('.online-auction-product__name.artamOnlineAuctionProductDetail__name').first().text().trim();
+                const sanatciMatch = sanatciName.match(/(.*?)\s*\((\d{4}-\d{4})\)/);
+                if (sanatciMatch) {
+                    this.data.sanatciAd = sanatciMatch[1].trim();
+                    this.data.sanatciDogumOlum = sanatciMatch[2];
+                }
+
+                const eserAdi = detailContainer.find('.online-auction-product__name.artamOnlineAuctionProductDetail__name').eq(1).text().trim();
+                this.data.eserAdi = eserAdi;
+            }
+            const lotNoText = detailContainer.find('.online-auction-product__lotno.artamOnlineAuctionProductDetail__lotno').text().trim();
+            this.data.lotNo = parseInt(lotNoText.replace(/[^0-9]/g, ''));
+            this.data.muzayedeNo = "396";
 
 
-            const sanatciInfo = $('.online-auction-product__name.artamOnlineAuctionProductDetail__name').text().trim();
-            this.data.sanatciAd = sanatciInfo.split('(')[0].trim();
-            this.data.sanatciDogumOlum = sanatciInfo.match(/\((.*?)\)/);
 
-
-
-        
-            const literatureText = $('.categoryProduct__longDesc').text().trim();
-            const eserAdiMatch = literatureText.match(/"([^"]+)"/);
-            this.data.eserAdi = eserAdiMatch[1];
-            
-
-            const descText = $('.online-auction-product__desc, .artamOnlineAuctionProductDetail__desc').text().trim();
+            const descText = detailContainer.find('.online-auction-product__desc.artamOnlineAuctionProductDetail__desc').text().trim();
 
             const teknikMatch = descText.match(/([^,]+) üzerine ([^,]+)/);
-            this.data.turu = this.data.turu + " "+ teknikMatch ? `${teknikMatch[2]} (${teknikMatch[1]})` : null;
+            if (teknikMatch) {
+                this.data.turu = `${teknikMatch[2]} (${teknikMatch[1]})`;
+            }
 
             this.data.imzali = descText.toLowerCase().includes('imzalı');
 
             const tarihMatch = descText.match(/(\d{4}) tarihli/);
-            this.data.tarihi = tarihMatch ? new Date(tarihMatch[1]) : null;
+            if (tarihMatch) {
+                this.data.tarihi = parseInt(tarihMatch[1]); // Örn: 1977
+            }
 
             const boyutMatch = descText.match(/(\d+)x(\d+)\s*(cm|mm|m)/i);
             if (boyutMatch) {
@@ -61,45 +81,61 @@ class ProductParser {
                 this.data.boyutBirim = boyutMatch[3].toLowerCase();
             }
 
-            const bitisText = $('.artamOnlineAuctionProductDetail__finishedTime').text().trim();
-            const bitisTarihiMatch = bitisText.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+            const priceElement = detailContainer.find('.online-auction-product__price.d-iblock span').first();
+            if (priceElement.length) {
+                const priceText = priceElement.text().trim();
+                const priceMatch = priceText.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*TL/);
+                if (priceMatch) {
+                    this.data.satisFiyati = parseFloat(priceMatch[1].replace(/[.,]/g, ''));
+                }
+            }
+
+            const teklifText = detailContainer.find('.online-auction-product__offer_count').text().trim();
+            const teklifMatch = teklifText.match(/Teklifler:\s*(\d+)/);
+            if (teklifMatch) {
+                this.data.teklifSayisi = parseInt(teklifMatch[1]);
+            }
+
+            const averageText = detailContainer.find('.artamOnlineAuctionProductDetail__averagePrice').text().trim();
+            if (averageText.includes('Güncel Değer Ortalaması')) {
+                const averageMatch = averageText.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*TL\s*-\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*TL/);
+                if (averageMatch) {
+                    this.data.guncelDegerOrtalamasi = `${averageMatch[1]} TL - ${averageMatch[2]} TL`;
+                }
+            }
+
+            const bitisText = detailContainer.find('.artamOnlineAuctionProductDetail__finishedTime').text().trim();
+            const bitisTarihiMatch = bitisText.match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
             if (bitisTarihiMatch) {
                 this.data.tarih = new Date(
-                    bitisTarihiMatch[3], 
-                    bitisTarihiMatch[2] - 1, 
-                    bitisTarihiMatch[1]
+                    bitisTarihiMatch[3],
+                    bitisTarihiMatch[2] - 1,
+                    bitisTarihiMatch[1],
+                    bitisTarihiMatch[4],
+                    bitisTarihiMatch[5]
                 );
             }
 
-            const guncelFiyat = $('.online-auction-product__price span').text().trim();
-            const guncelFiyatMatch = guncelFiyat.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*TL/);
-            if (guncelFiyatMatch) {
-                this.data.satisFiyati = parseFloat(guncelFiyatMatch[1].replace(/[.,]/g, ''));
-            }
-
-            const baslangicText = $('.artamOnlineAuctionProductDetail__openingPrice').text().trim();
+            const baslangicText = detailContainer.find('.artamOnlineAuctionProductDetail__openingPrice').text().trim();
             const baslangicMatch = baslangicText.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*TL/);
             if (baslangicMatch) {
                 this.data.baslangicFiyati = parseFloat(baslangicMatch[1].replace(/[.,]/g, ''));
             }
 
-            const averageText = $('.artamOnlineAuctionProductDetail__averagePrice').text().trim();
-            const averageMatch = averageText.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*TL\s*-\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*TL/);
-            if (averageMatch) {
-                const min = parseFloat(averageMatch[1].replace(/[.,]/g, ''));
-                const max = parseFloat(averageMatch[2].replace(/[.,]/g, ''));
-                this.data.guncelDegerOrtalamasi = (min + max) / 2;
-            }
-
+            const imgUrl = $('.artamOnlineAuctionProductDetail__imgWrapper img').first().attr('src');
+            this.data.imageLink = imgUrl;
             this.data.link = url;
 
-            const teklifText = $('.online-auction-product__offer_count').text().trim();
-            const teklifMatch = teklifText.match(/\d+/);
-            this.data.teklifSayisi = teklifMatch ? parseInt(teklifMatch[0]) : 0;
+            console.log('Parse edilen veriler:', {
+                sanatciAd: this.data.sanatciAd,
+                sanatciDogumOlum: this.data.sanatciDogumOlum,
+                tarihi: this.data.tarihi
+            });
 
             return this.data;
+
         } catch (error) {
-            console.error('Parse hatası:', error);
+            console.error(`Parse hatası:`, error);
             return null;
         }
     }
