@@ -114,11 +114,11 @@ ArtWork,
 // Modelleri senkronize et
 const syncModels = async () => {
     try {
-        // Force: true ile tabloları silip yeniden oluşturur
-        await sequelize.sync({ force: true });
-        console.log('Modeller senkronize edildi');
+        
+        await sequelize.sync({ alter: true });
+        console.log('Modeller güncellendi');
     } catch (error) {
-        console.error('Model senkronizasyon hatası:', error);
+        console.error('Model güncelleme hatası:', error);
     }
 };
 

@@ -33,19 +33,20 @@ class ProductParser {
                 console.error('Detay container bulunamadı');
                 return null;
             }
+
             const parts = url.split('/');
             const sanatciEser = parts[parts.length - 1];
-
             const regex = /^(.*?)-(\d{4}(?:-\d{4})?)-(.*?)(?:-\d+)?$/;
-
             const match = sanatciEser.match(regex);
+
             if (match) {
                 this.data.sanatciAd = match[1].replace(/-/g, ' ').trim();
                 this.data.sanatciDogumOlum = match[2];
-                this.data.eserAdi = match[3].replace(/-/g, ' ').trim()
-            }else{
+                this.data.eserAdi = match[3].replace(/-/g, ' ').trim();
+            } else {
                 const sanatciName = detailContainer.find('.online-auction-product__name.artamOnlineAuctionProductDetail__name').first().text().trim();
                 const sanatciMatch = sanatciName.match(/(.*?)\s*\((\d{4}-\d{4})\)/);
+                
                 if (sanatciMatch) {
                     this.data.sanatciAd = sanatciMatch[1].trim();
                     this.data.sanatciDogumOlum = sanatciMatch[2];
@@ -54,6 +55,7 @@ class ProductParser {
                 const eserAdi = detailContainer.find('.online-auction-product__name.artamOnlineAuctionProductDetail__name').eq(1).text().trim();
                 this.data.eserAdi = eserAdi;
             }
+
             const lotNoText = detailContainer.find('.online-auction-product__lotno.artamOnlineAuctionProductDetail__lotno').text().trim();
             this.data.lotNo = parseInt(lotNoText.replace(/[^0-9]/g, ''));
             this.data.muzayedeNo = "396";
@@ -97,23 +99,23 @@ class ProductParser {
 
             const averageText = detailContainer.find('.artamOnlineAuctionProductDetail__averagePrice').text().trim();
             if (averageText) {
-                const priceRegex = /(?:Güncel Değer Ortalaması:)?\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*TL\s*-\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*TL/i;
-                const matches = averageText.match(priceRegex);
+                const cleanText = averageText.replace(/\./g, '');
+                
+                const priceRegex = /(?:Güncel Değer Ortalaması:)?\s*(\d+(?:,\d+)*)\s*TL\s*-\s*(\d+(?:,\d+)*)\s*TL/i;
+                const matches = cleanText.match(priceRegex);
                 
                 if (matches) {
-                    this.data.guncelDegerOrtalamasi = `${matches[1]} TL - ${matches[2]} TL`;
-                } else {
-                    const numberRegex = /(\d+(?:,\d+)*(?:\.\d+)?)/g;
-                    const numbers = averageText.match(numberRegex);
-                    if (numbers && numbers.length >= 2) {
-                        this.data.guncelDegerOrtalamasi = `${numbers[0]} TL - ${numbers[1]} TL`;
-                    }
+                    const firstPrice = matches[1].replace(/,/g, '.');
+                    const secondPrice = matches[2].replace(/,/g, '.');
+                    
+                    this.data.guncelDegerOrtalamasi = `${firstPrice} TL - ${secondPrice} TL`;
+                    
+                    console.log('Güncel Değer Parse Sonucu:', {
+                        rawText: averageText,
+                        cleanText: cleanText,
+                        parsedValue: this.data.guncelDegerOrtalamasi
+                    });
                 }
-                
-                console.log('Güncel Değer Parse Sonucu:', {
-                    rawText: averageText,
-                    parsedValue: this.data.guncelDegerOrtalamasi
-                });
             }
 
             const bitisText = detailContainer.find('.artamOnlineAuctionProductDetail__finishedTime').text().trim();
@@ -138,7 +140,7 @@ class ProductParser {
             this.data.imageLink = imgUrl;
             this.data.link = url;
 
-            console.log('Parse edilen veriler:', {
+            console.log('Parse edilen sanatçı bilgileri:', {
                 sanatciAd: this.data.sanatciAd,
                 sanatciDogumOlum: this.data.sanatciDogumOlum,
                 tarihi: this.data.tarihi

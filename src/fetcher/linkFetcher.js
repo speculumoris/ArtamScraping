@@ -20,7 +20,22 @@ this.browserConfig = {
 
 const saveToDatabase = async (productDetail) => {
     try {
-        const eser = await db.Esers.create({
+        const eser = await db.Eserler.create({
+            sanatciAd: productDetail.sanatciAd,
+            turu: productDetail.turu,
+            eserAdi: productDetail.eserAdi,
+            lotNo: productDetail.lotNo,
+            teklifSayisi: productDetail.teklifSayisi,
+            muzayedeNo: productDetail.muzayedeNo,
+            tarih: productDetail.tarih,
+            boyutEn: productDetail.boyutEn,
+            boyutBoy: productDetail.boyutBoy,
+            boyutBirim: productDetail.boyutBirim,
+            imzali: productDetail.imzali,
+            tarihi: productDetail.tarihi,
+            baslangicFiyati: productDetail.baslangicFiyati,
+            satisFiyati: productDetail.satisFiyati,
+            guncelDegerOrtalamasi: productDetail.guncelDegerOrtalamasi,
             link: productDetail.link
         });
 
