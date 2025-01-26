@@ -18,35 +18,11 @@ this.browserConfig = {
     defaultViewport: null
 };
 
-const saveToDatabase = async (productDetail) => {
+const saveToDatabase = async (url) => {
     try {
-        // Kaydetmeden önce verileri kontrol et
-        console.log('Kaydedilecek veriler:', {
-            sanatciDogumOlum: productDetail.sanatciDogumOlum,
-            tarihi: productDetail.tarihi
-        });
-
         const eser = await db.Eser.create({
-            sanatciAd: productDetail.sanatciAd,
-            turu: productDetail.turu,
-            eserAdi: productDetail.eserAdi,
-            lotNo: productDetail.lotNo,
-            teklifSayisi: productDetail.teklifSayisi,
-            muzayedeNo: productDetail.muzayedeNo,
-            tarih: productDetail.tarih,
-            boyutEn: productDetail.boyutEn,
-            boyutBoy: productDetail.boyutBoy,
-            boyutBirim: productDetail.boyutBirim,
-            imzali: productDetail.imzali,
-            tarihi: productDetail.tarihi,  // Artık integer
-            baslangicFiyati: productDetail.baslangicFiyati,
-            satisFiyati: productDetail.satisFiyati,
-            guncelDegerOrtalamasi: productDetail.guncelDegerOrtalamasi,
-            link: productDetail.link,
-            imageLink: productDetail.imageLink,
-            sanatciDogumOlum: productDetail.sanatciDogumOlum,  // String olarak
+            link:url,
         });
-
         console.log(`Eser başarıyla kaydedildi. ID: ${eser.id}`);
         return eser;
     } catch (error) {
@@ -61,49 +37,35 @@ const getTablesFromScraping = async () => {
 
     try {
         const page = await browser.newPage();
-        
         await page.goto('https://www.artam.com/muzayede/396-klasik-ve-cagdas-tablolar?count=435', {
             waitUntil: 'networkidle0',
             timeout: 0
         });
-
         const eserDetayButtons = await page.$$eval('div.online-auction-product__borderBtn', buttons => {
             return buttons
                 .filter(button => button.textContent.trim() === 'ESER DETAY')
                 .map((_, index) => index);
         });
-
         console.log(`Toplam Eser Sayısı: ${eserDetayButtons.length}`);
-
         for (let i = 0; i < eserDetayButtons.length; i++) {
             console.log(`Eser ${i + 1}/${eserDetayButtons.length} işleniyor...`);
-
             try {
                 const buttons = await page.$$('div.online-auction-product__borderBtn');
                 const eserDetayButtonsFiltered = [];
-                
                 for (const button of buttons) {
                     const text = await page.evaluate(el => el.textContent.trim(), button);
                     if (text === 'ESER DETAY') {
                         eserDetayButtonsFiltered.push(button);
                     }
                 }
-
                 await Promise.all([
                     page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 0 }),
                     eserDetayButtonsFiltered[i].click()
                 ]);
-
-                const html = await page.content();
                 const currentUrl = page.url();
-
-                const parser = new ProductParser();
-                const productDetail = parser.parseProductDetail(html,currentUrl);
-                if (productDetail) {
-                    productDetail.url = currentUrl;
-                    
+                if (currentUrl) {
                     try {
-                        const savedEser = await saveToDatabase(productDetail);
+                        const savedEser = await saveToDatabase(currentUrl);
                         results.push(savedEser);
                         console.log(`Eser ${i + 1} başarıyla parse edildi ve kaydedildi: ${currentUrl}`);
                     } catch (dbError) {
@@ -113,15 +75,11 @@ const getTablesFromScraping = async () => {
                         }
                     }
                 }
-
                 await Promise.all([
                     page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 0 }),
                     page.goBack()
                 ]);
-
-                // Rate limiting
                 await new Promise(resolve => setTimeout(resolve, 1000));
-
             } catch (error) {
                 console.error(`Eser ${i + 1} işlenirken hata oluştu:`, error.message);
                 
@@ -131,9 +89,7 @@ const getTablesFromScraping = async () => {
                 });
             }
         }
-
         return results;
-
     } catch (error) {
         console.error('Scraping işlemi sırasında hata:', error);
         throw error;
