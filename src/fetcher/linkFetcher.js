@@ -21,7 +21,10 @@ this.browserConfig = {
 const saveToDatabase = async (productDetail) => {
     try {
         const eser = await db.Eserler.create({
-            sanatciAd: productDetail.sanatciAd,
+            sanatciAd: productDetail.sanatciAd.toUpperCase(),
+            sanatciDogumOlum: productDetail.sanatciDogumOlum,
+            bagisBilgisi: productDetail.bagisBilgisi,
+            baskiBilgisi: productDetail.baskiBilgisi,
             turu: productDetail.turu,
             eserAdi: productDetail.eserAdi,
             lotNo: productDetail.lotNo,
@@ -36,7 +39,8 @@ const saveToDatabase = async (productDetail) => {
             baslangicFiyati: productDetail.baslangicFiyati,
             satisFiyati: productDetail.satisFiyati,
             guncelDegerOrtalamasi: productDetail.guncelDegerOrtalamasi,
-            link: productDetail.link
+            link: productDetail.link,
+            imageLink: productDetail.imageLink
         });
 
         console.log(`Eser başarıyla kaydedildi. ID: ${eser.id}`);
