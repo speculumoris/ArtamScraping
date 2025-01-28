@@ -19,6 +19,8 @@ class ProductParser {
             baslangicFiyati: 0.00,
             satisFiyati: null,
             guncelDegerOrtalamasi: "",
+            baskiBilgisi: "",
+            bagisBilgisi: "",
             link: "",
             imageLink: ""
         };
@@ -43,15 +45,20 @@ class ProductParser {
                 this.data.sanatciAd = match[1].replace(/-/g, ' ').trim();
                 this.data.sanatciDogumOlum = match[2];
                 this.data.eserAdi = match[3].replace(/-/g, ' ').trim();
-            } else {
-                const sanatciName = detailContainer.find('.online-auction-product__name.artamOnlineAuctionProductDetail__name').first().text().trim();
-                const sanatciMatch = sanatciName.match(/(.*?)\s*\((\d{4}-\d{4})\)/);
+            }
+
+            if (!this.data.sanatciAd || !this.data.sanatciDogumOlum) {
+                const sanatciElement = detailContainer.find('.online-auction-product__name.artamOnlineAuctionProductDetail__name').first();
+                const sanatciText = sanatciElement.text().trim();
+                const sanatciMatch = sanatciText.match(/(.*?)\s*\((\d{4}-\d{4})\)/);
                 
                 if (sanatciMatch) {
                     this.data.sanatciAd = sanatciMatch[1].trim();
                     this.data.sanatciDogumOlum = sanatciMatch[2];
                 }
+            }
 
+            if (!this.data.eserAdi) {
                 const eserAdi = detailContainer.find('.online-auction-product__name.artamOnlineAuctionProductDetail__name').eq(1).text().trim();
                 this.data.eserAdi = eserAdi;
             }
@@ -62,9 +69,41 @@ class ProductParser {
 
             const descText = detailContainer.find('.online-auction-product__desc.artamOnlineAuctionProductDetail__desc').text().trim();
 
+            // Baskı bilgisi parse
+            const baskiRegex = /(?:Baskı\.\s*Edition:\s*([^.]+)|müze\s+baskısı|museum\s+print|Baskı)/i;
+            const baskiMatch = descText.match(baskiRegex);
+
+            if (baskiMatch) {
+                if (baskiMatch[1]) {
+                    // Normal baskı bilgisi (Edition: E/A gibi)
+                    this.data.baskiBilgisi = baskiMatch[1].trim();
+                } else {
+                    // Müze baskısı veya sadece Baskı durumu
+                    const muzeMatch = url.match(/muze-baskisi-(.+)$/);
+                    if (muzeMatch) {
+                        this.data.baskiBilgisi = `Müze Baskısı - ${muzeMatch[1].replace(/-/g, ' ').trim()}`;
+                    } else {
+                        this.data.baskiBilgisi = 'Baskı';
+                    }
+                }
+            }
+
+            // Bağış bilgisi parse - boyut bilgisini temizle
+            const cleanDesc = descText.replace(/\d+x\d+cm-\s*/, ''); // Boyut bilgisini temizle
+            const bagisMatch = cleanDesc.match(/([^.]+(?:derneği|vakfı|kurumu)[^.]*bağış[^.]*\.)/i);
+            if (bagisMatch) {
+                this.data.bagisBilgisi = bagisMatch[1].trim();
+            }
+
+            // Teknik bilgi parse
             const teknikMatch = descText.match(/([^,]+) üzerine ([^,]+)/);
             if (teknikMatch) {
                 this.data.turu = `${teknikMatch[2]} (${teknikMatch[1]})`;
+            } else {
+                const firstPart = descText.split(',')[0].trim();
+                if (firstPart && !firstPart.toLowerCase().includes('baskı')) {
+                    this.data.turu = firstPart;
+                }
             }
 
             this.data.imzali = descText.toLowerCase().includes('imzalı');
@@ -142,8 +181,7 @@ class ProductParser {
 
             console.log('Parse edilen sanatçı bilgileri:', {
                 sanatciAd: this.data.sanatciAd,
-                sanatciDogumOlum: this.data.sanatciDogumOlum,
-                tarihi: this.data.tarihi
+                sanatciDogumOlum: this.data.sanatciDogumOlum
             });
 
             return this.data;

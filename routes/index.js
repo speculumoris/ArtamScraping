@@ -3,6 +3,7 @@ const router = express.Router();
 const linkFetcher = require('../src/fetcher/linkFetcher');
 const productFetcher = require('../src/fetcher/productFetcher');
 const { Esers, Eserler } = require('../models');
+const fixLacksService = require('../src/services/fixLacksService');
 
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
@@ -20,6 +21,21 @@ router.get('/artam/auctions', async function(req, res, next) {
         res.status(500).json({
             success: false,
             error: 'Link toplama işlemi başarısız'
+        });
+    }
+});
+router.get('/artam/fix-lacks', async function(req, res, next) {
+    try {
+        const results = await fixLacksService.fixLackingRecords();
+        res.json({
+            success: true,
+            data: results
+        });
+    } catch (error) {
+        console.error('Eksik kayıt düzeltme hatası:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Eksik kayıt düzeltme işlemi başarısız'
         });
     }
 });
