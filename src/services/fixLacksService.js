@@ -1,6 +1,6 @@
 const { Eserler } = require('../../models');
 const puppeteer = require('puppeteer');
-const ProductParser = require('../parser/ProductParser');
+const LackDataParser = require('../parser/LackDataParser');
 const {Op} = require("sequelize");
 const sequelize = require('sequelize');
 
@@ -18,31 +18,11 @@ const findLackingRecords = async () => {
                         [Op.or]: [
                             {sanatciAd: ''},
                             {sanatciAd: null},
-                            {turu: ''},
-                            {turu: null}
-                        ]
-                    },
-                    {
-                        baskiBilgisi: {
-                            [Op.or]: [
-                                {[Op.eq]: ''},
-                                {[Op.eq]: null}
-                            ]
-                        }
-                    },
-                    {
-                        [Op.or]: [
-                            {updated_at: null},
-                            sequelize.where(
-                                sequelize.col('updated_at'),
-                                '=',
-                                sequelize.col('created_at')
-                            )
                         ]
                     }
                 ]
             },
-            attributes: ['id', 'link', 'created_at', 'updated_at']
+            attributes: ['id', 'link']
         });
     } catch (error) {
         console.error('Eksik kayıt arama hatası:', error);
@@ -72,25 +52,29 @@ const updateLackingRecord = async (record) => {
         });
 
         const html = await page.content();
-        const parser = new ProductParser();
+        const parser = new LackDataParser();
         const updatedData = parser.parseProductDetail(html, record.link);
 
-        if (updatedData) {
+        if (updatedData && updatedData.sanatciAd) {
             const currentRecord = await Eserler.findByPk(record.id);
-            if (isDifferentDay(currentRecord.updated_at, currentRecord.created_at)) {
+            if (isDifferentDay(currentRecord.updatedAt, currentRecord.createdAt)) {
                 console.log(`⚠️ ID: ${record.id} farklı günde güncellenmiş, atlıyorum`);
                 return false;
             }
 
             await Eserler.update({
-                sanatciAd: updatedData.sanatciAd,
-                turu: updatedData.turu,
-                baskiBilgisi: updatedData.baskiBilgisi
+                sanatciAd: updatedData.sanatciAd.toUpperCase()
             }, {
-                where: { id: record.id }
+                where: { 
+                    id: record.id,
+                    [Op.or]: [
+                        { sanatciAd: null },
+                        { sanatciAd: '' }
+                    ]
+                }
             });
 
-            console.log(`✅ ID: ${record.id} güncellendi`);
+            console.log(`✅ ID: ${record.id} güncellendi - Yeni sanatçı adı: ${updatedData.sanatciAd.toUpperCase()}`);
             return true;
         }
 
