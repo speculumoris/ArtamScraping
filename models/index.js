@@ -19,8 +19,8 @@ const Esers = sequelize.define(
     }
 );
 
-const Eserler = sequelize.define(
-    "Eserlers",
+const EserlerCsv = sequelize.define(
+    "EserlersCsv",
     {
         id: {
             type: DataTypes.INTEGER,
@@ -108,7 +108,7 @@ const Eserler = sequelize.define(
         }
     },
     {
-        tableName: "Eserlers"
+        tableName: "EserlerCsv"
     }
 );
 
@@ -145,6 +145,6 @@ const syncModels = async () => {
 module.exports = {
     sequelize,
     Esers, // Esers modelini export et
-    Eserler, // Eserler modelini export et
+    EserlerCsv, // Eserler modelini export et
     syncModels,
 };

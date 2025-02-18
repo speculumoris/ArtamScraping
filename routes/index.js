@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const linkFetcher = require('../src/fetcher/linkFetcher');
 const productFetcher = require('../src/fetcher/productFetcher');
-const { Esers, Eserler } = require('../models');
+const { Esers, EserlerCsv } = require('../models');
 const fixLacksService = require('../src/services/fixLacksService');
 
 router.get('/', function(req, res, next) {

@@ -1,6 +1,12 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const ProductParser = require('../parser/ProductParser');
-const { Eserler } = require('../../models');
+const { EserlerCsv } = require('../../models');
+const proxyConfig = require('../../config/proxy_config.json');
+const uaMac = require('../../assets/UserAgents/ua-mac.json');
+const uaFirefox = require('../../assets/UserAgents/ua-firefox.json');
+
+puppeteer.use(StealthPlugin());
 
 const randomDelay = (min, max) => {
     return Math.floor(Math.random() * (max - min + 1) + min);
@@ -32,7 +38,7 @@ const saveToDatabase = async (productDetail) => {
             tarihi: productDetail.tarihi
         });
 
-        const eser = await Eserler.create({
+        const eser = await EserlerCsv.create({
             sanatciAd: productDetail.sanatciAd,
             turu: productDetail.turu,
             eserAdi: productDetail.eserAdi,
@@ -61,31 +67,75 @@ const saveToDatabase = async (productDetail) => {
     }
 };
 
+const getRandomProxy = () => {
+    const hosts = Object.values(proxyConfig.defaultHost);
+    const randomIndex = Math.floor(Math.random() * hosts.length);
+    return hosts[randomIndex];
+};
+
+const getRandomUserAgent = () => {
+    const allUserAgents = [...uaMac, ...uaFirefox];
+    const randomIndex = Math.floor(Math.random() * allUserAgents.length);
+    return allUserAgents[randomIndex];
+};
+
 const getProductInformations = async (link, retryCount = 3) => {
+    const randomProxyHost = getRandomProxy();
+    const randomUserAgent = getRandomUserAgent();
+    
     const browser = await puppeteer.launch({
-        headless: 'new',
+        executablePath: '/usr/bin/google-chrome',
         args: [
+            '--start-maximized',
+            '--remote-allow-origins=*',
             '--no-sandbox',
             '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
             '--window-size=1920,1080',
-            '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        ]
+            '--ignore-certificate-errors',
+            '--disable-accelerated-2d-canvas',
+            '--disable-gpu',
+            '--hide-scrollbars',
+            '--disable-notifications',
+            '--disable-extensions',
+            '--disable-plugins',
+            '--disable-web-security',
+            `--proxy-server=http://${proxyConfig.username}:${proxyConfig.password}@${randomProxyHost}:${proxyConfig.port}`
+        ],
+        headless: true,
+        timeout: 0,
+        ignoreHTTPSErrors: true,
     });
 
+
     try {
+        const email = "sefa.byndr4@gmail.com";
+        const password = "135797531Sef";
         const page = await browser.newPage();
         await page.setViewport({ width: 1920, height: 1080 });
         await page.setDefaultNavigationTimeout(60000);
-        
-        await page.setRequestInterception(true);
-        page.on('request', (request) => {
-            if (['image', 'stylesheet', 'font'].includes(request.resourceType())) {
-                request.continue();
-            } else {
-                request.continue();
-            }
-        });
+        await page.setUserAgent(randomUserAgent());
+        console.log("🟡 Artam giriş sayfasına gidiliyor...");
+        const cookies= 
+        await page.setCookie(...cookies);
+        /*await page.goto('https://artam.com/giris', { waitUntil: 'networkidle2', timeout: 30000 });
 
+        // Email ve şifre alanlarını bekle
+        await page.waitForSelector('#loginEmail', { timeout: 5000 });
+        await page.waitForSelector('#loginPassword', { timeout: 5000 });
+
+        // Email ve şifreyi gir
+        await page.type('#loginEmail', email, { delay: 100 });  
+        await page.type('#loginPassword', password, { delay: 100 });
+
+        // "Oturum Aç" butonuna tıkla
+        await page.click('button:has-text("Oturum Aç")');
+
+        // Giriş işlemi sonrası yönlendirmeyi bekle
+        await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 });
+
+
+        */
         for (let attempt = 1; attempt <= retryCount; attempt++) {
             try {
                 console.log(`${link} için ${attempt}. deneme...`);
@@ -123,7 +173,7 @@ const getProductInformations = async (link, retryCount = 3) => {
                 const productDetail = parser.parseProductDetail(html, link);
 
                 if (productDetail) {
-                    const existingProduct = await Eserler.findOne({
+                    const existingProduct = await EserlerCsv.findOne({
                         where: { link: productDetail.link }
                     });
 
