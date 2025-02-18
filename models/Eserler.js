@@ -86,7 +86,8 @@ const Eser = sequelize.define('Eser', {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
     }
-
+}, {
+    tableName: 'EserlerCsv'
 });
 
 module.exports = Eser; 

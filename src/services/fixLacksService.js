@@ -1,4 +1,4 @@
-const { Eserler } = require('../../models');
+const { Eserler, EserlerCsv } = require('../../models');
 const puppeteer = require('puppeteer');
 const LackDataParser = require('../parser/LackDataParser');
 const {Op} = require("sequelize");
@@ -11,7 +11,7 @@ const browserConfig = {
 
 const findLackingRecords = async () => {
     try {
-        return await Eserler.findAll({
+        return await EserlerCsv.findAll({
             where: {
                 [Op.and]: [
                     {
@@ -56,13 +56,13 @@ const updateLackingRecord = async (record) => {
         const updatedData = parser.parseProductDetail(html, record.link);
 
         if (updatedData && updatedData.sanatciAd) {
-            const currentRecord = await Eserler.findByPk(record.id);
+            const currentRecord = await EserlerCsv.findByPk(record.id);
             if (isDifferentDay(currentRecord.updatedAt, currentRecord.createdAt)) {
                 console.log(`⚠️ ID: ${record.id} farklı günde güncellenmiş, atlıyorum`);
                 return false;
             }
 
-            await Eserler.update({
+            await EserlerCsv.update({
                 sanatciAd: updatedData.sanatciAd.toUpperCase()
             }, {
                 where: { 
