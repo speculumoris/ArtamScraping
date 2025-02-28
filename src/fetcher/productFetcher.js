@@ -2,7 +2,6 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const ProductParser = require('../parser/ProductParser');
 const { EserlerCsv } = require('../../models');
-const proxyConfig = require('../../config/proxy_config.json');
 const uaMac = require('../../assets/UserAgents/ua-mac.json');
 const uaFirefox = require('../../assets/UserAgents/ua-firefox.json');
 
