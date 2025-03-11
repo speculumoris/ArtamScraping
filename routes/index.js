@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const linkFetcher = require('../src/fetcher/linkFetcher');
-const productFetcher = require('../src/fetcher/productFetcher');
 const { Esers, EserlerCsv } = require('../models');
 const fixLacksService = require('../src/services/fixLacksService');
+const lebrizFetcher = require('../src/fetcher/lebrizFetcher');
 
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
@@ -40,51 +40,12 @@ router.get('/artam/fix-lacks', async function(req, res, next) {
     }
 });
 
-router.get('/eser-links', async (req, res) => {
+router.get('/lebriz', async (req, res) => {
     try {
-        const links = await Esers.findAll({
-            attributes: ['link'],
-            raw: true
-        });
-
-        const linkList = links.map(item => item.link);
-        const results = {
-            success: [],
-            failed: []
-        };
-
-        // Her link için
-        for (const link of linkList) {
-            try {
-                const productInfo = await productFetcher.getProductInformations(link);
-                if (productInfo) {
-                    results.success.push(link);
-                    console.log(`${link} başarıyla işlendi`);
-                } else {
-                    results.failed.push({ link, reason: 'Veri alınamadı' });
-                }
-            } catch (error) {
-                results.failed.push({ link, reason: error.message });
-                console.error(`${link} işlenirken hata:`, error);
-            }
-        }
-
-        res.json({
-            success: true,
-            data: {
-                total: linkList.length,
-                success: results.success.length,
-                failed: results.failed.length,
-                failedLinks: results.failed
-            }
-        });
-
+        const data = await lebrizFetcher();
+        res.json(data);
     } catch (error) {
-        console.error('İşlem sırasında hata:', error);
-        res.status(500).json({
-            success: false,
-            error: 'İşlem başarısız'
-        });
+        res.status(500).send('Bir hata oluştu: ' + error.message);
     }
 });
 

@@ -111,6 +111,67 @@ const EserlerCsv = sequelize.define(
         tableName: "EserlerCsv"
     }
 );
+const LebrizLot = sequelize.define('LebrizLot', {
+    image: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    lotNo: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    artist: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    auction: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    specs: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    boyutEn: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+    },
+    boyutBoy: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+    },
+    tur: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    openingPriceTRL: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    salePriceTRL: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    openingPriceUSD: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    salePriceUSD: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    openingPriceEUR: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    salePriceEUR: {
+        type: DataTypes.STRING,
+        allowNull: true
+    }
+}, {
+    tableName: 'LebrizLots', // Tablonun ismi
+    timestamps: false // Eğer createdAt ve updatedAt alanlarını istemiyorsanız
+});
 
 /*const ArtWork = require('./ArtWork');
 const Sanatci = require('./Sanatci');
@@ -146,5 +207,7 @@ module.exports = {
     sequelize,
     Esers, // Esers modelini export et
     EserlerCsv, // Eserler modelini export et
+    LebrizLot,
     syncModels,
+    
 };

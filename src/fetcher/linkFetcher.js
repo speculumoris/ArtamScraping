@@ -2,7 +2,6 @@ const puppeteer = require("puppeteer");
 const ProductParser = require("../parser/ProductParser");
 const db = require("../../models");
 const fs = require("fs");
-const proxyConfig = require("../../config/proxy_config.json");
 const uaMac = require("../../assets/UserAgents/ua-mac.json");
 const uaFirefox = require("../../assets/UserAgents/ua-firefox.json");
 const cookiesPath = "/Users/yusufsefabayindir/IdeaProjects/ArtamScraping/config/cookies.json"; 
