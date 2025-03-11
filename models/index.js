@@ -132,6 +132,18 @@ const LebrizLot = sequelize.define('LebrizLot', {
         type: DataTypes.TEXT,
         allowNull: true
     },
+    boyutEn: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+    },
+    boyutBoy: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+    },
+    tur: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     openingPriceTRL: {
         type: DataTypes.STRING,
         allowNull: true
