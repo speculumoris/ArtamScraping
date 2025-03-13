@@ -96,16 +96,16 @@ const outputPath =
     }
 
     for (let currentPage = 1; currentPage <= totalPages; currentPage++) {
-      // Başlangıç sayfasından küçük sayfalarda atla
+      
       if (currentPage < startPage) {
         try {
-          // Doğrudan istenen sayfaya git
+          
           await page.select(
             '#aucDB_awv_pager1_drpPage', 
             startPage.toString()
           );
 
-          // Sayfa geçişini manuel tetikle
+          
           await page.evaluate(() => {
             const dropdown = document.getElementById('aucDB_awv_pager1_drpPage');
             if (dropdown) {
@@ -113,13 +113,13 @@ const outputPath =
             }
           });
 
-          // Sayfanın yeniden yüklenmesini bekle
+          
           await page.waitForNavigation({ 
             waitUntil: 'networkidle0', 
             timeout: 15000 
           });
 
-          // Thumbnail listesinin yüklenmesini bekle
+          
           await page.waitForSelector(
             '[id^="aucDB_awv_lstThumbs_ctl"][id$="_awd_awd_aucdb_img1"]', 
             { visible: true, timeout: 10000 }
@@ -127,7 +127,7 @@ const outputPath =
 
           await sleep(2000);
 
-          // Geçerli sayfayı güncelle
+          
           currentPage = startPage;
         } catch (navigationError) {
           console.error('Sayfa geçişi sırasında hata:', navigationError);
@@ -149,7 +149,7 @@ const outputPath =
       for (let i = 0; i < thumbnailCount; i++) {
         console.log(`🖼️ Thumbnail ${i + 1} detayları alınıyor...`);
 
-        // Thumbnail'a tıkla
+        
         await page.evaluate((index) => {
           const thumbs = document.querySelectorAll(
             '[id^="aucDB_awv_lstThumbs_ctl"][id$="_awd_awd_aucdb_img1"]'
@@ -168,7 +168,7 @@ const outputPath =
             const infoTable = document.querySelector(".awdInfoPanel");
             const infoRows = Array.from(infoTable.querySelectorAll("tr"));
 
-            // Başlık ve Sanatçı
+            
             const artistLink = document.querySelector('a[href*="artistID"]');
             const artistName = artistLink ? artistLink.textContent.trim() : '';
             details.artist = artistName;
@@ -197,7 +197,7 @@ const outputPath =
                 );
             })?.textContent.trim() || null;
 
-            // Boyutlar
+            
             const dimensionRows = infoRows.filter((row) =>
               /(\d+(\.\d+)?\s*x\s*\d+(\.\d+)?)\s*(cm\.|in\.)/.test(
                 row.textContent
@@ -218,12 +218,12 @@ const outputPath =
             const yearRow = infoRows.find((row) => {
               const yearText = row.textContent.trim();
               return (
-                /^\d{4}$/.test(yearText) || // Tam yıl (1940)
-                /^\d{4}'s$/.test(yearText) || // 1940's
-                /^Early \d{4}'s$/.test(yearText) || // Early 1940's
-                /^Late \d{4}'s$/.test(yearText) || // Late 1940's
-                /^\d{4}-\d{4}$/.test(yearText) || // Yıl aralığı
-                /^\d{4}'s - \d{4}'s$/.test(yearText) // Dönem aralığı
+                /^\d{4}$/.test(yearText) || 
+                /^\d{4}'s$/.test(yearText) || 
+                /^Early \d{4}'s$/.test(yearText) || 
+                /^Late \d{4}'s$/.test(yearText) || 
+                /^\d{4}-\d{4}$/.test(yearText) || 
+                /^\d{4}'s - \d{4}'s$/.test(yearText) 
               );
             });
             details.year = yearRow ? yearRow.textContent.trim() : "";
@@ -243,12 +243,12 @@ const outputPath =
                   .join("(") + ")"
               : "";
 
-            // İmza
+            
             details.isSigned = infoRows.some(
               (row) => row.textContent.trim().toLowerCase() === "signed"
             );
 
-            // Müzayede Bilgileri
+            
             const auctionRow = infoRows.find((row) =>
               row.textContent.includes("Auction :")
             );
@@ -263,7 +263,7 @@ const outputPath =
               };
             }
 
-            // Fiyat Bilgileri
+            
             const extractPrices = (priceRow, isOpeningPrice = false) => {
               const priceTable = priceRow.querySelector('table');
               if (!priceTable) return [];
@@ -275,16 +275,16 @@ const outputPath =
 
                 const img = cells[0].querySelector('img');
                 if (img) {
-                  // Resimden gelen fiyatı formatla
+                  
                   price = new URL(img.src).searchParams.get('t') || cells[0].textContent.trim();
                   price = price.replace(/,/g, '');
                 } else {
-                  // Normal metinden gelen fiyatı formatla
+                  
                   price = cells[0]?.textContent.trim() || '';
                   price = price.replace(/,/g, '');
                 }
 
-                // Aralık fiyatları için özel işlem
+                
                 if (price.includes('-')) {
                   const [min, max] = price.split('-').map(p => p.trim());
                   price = `${min}.00 - ${max}.00`;
@@ -292,7 +292,7 @@ const outputPath =
                   price = `${price}.00`;
                 }
 
-                // Sonundaki fazladan .00'ı sil
+                
                 price = price.replace(/\.00\.00$/, '.00');
 
                 currency = cells[1]?.textContent.trim() || '';
@@ -308,7 +308,7 @@ const outputPath =
                 row.textContent.includes('Sale price :')
             );
 
-            // Fiyat bilgilerini sırala
+            
             const estimateRow = priceRows.find(row => row.textContent.includes('Estimate :'));
             const openingPriceRow = priceRows.find(row => row.textContent.includes('Opening price :'));
             const salePriceRow = priceRows.find(row => row.textContent.includes('Sale price :'));
@@ -319,7 +319,7 @@ const outputPath =
               sale: salePriceRow ? extractPrices(salePriceRow) : null
             };
 
-            // Provenance
+            
             const provenanceRow = infoRows.find((row) =>
               row.textContent.toLowerCase().includes("provenance")
             );
@@ -358,7 +358,7 @@ const outputPath =
 
       if (currentPage < totalPages) {
         try {
-          // Sonraki sayfaya geçiş kodları
+         
           await page.select(
             "#aucDB_awv_pager1_drpPage",
             (currentPage + 1).toString()
